@@ -6,8 +6,12 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
+import java.io.File;
+
 public class App {
     public static void main(String[] args) throws Exception {
+        setupChromeDriver();
+
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless=new");
         options.addArguments("--no-sandbox");
@@ -31,5 +35,29 @@ public class App {
         } finally {
             webDriver.quit();
         }
+    }
+
+    // Ищет chromedriver в кэше Selenium Manager (~/.cache/selenium/chromedriver)
+    private static void setupChromeDriver() {
+        File cacheDir = new File(System.getProperty("user.home"), ".cache/selenium/chromedriver");
+        File driver = findDriver(cacheDir);
+        if (driver != null) {
+            System.setProperty("webdriver.chrome.driver", driver.getAbsolutePath());
+        }
+    }
+
+    private static File findDriver(File dir) {
+        if (dir == null || !dir.isDirectory()) return null;
+        File[] children = dir.listFiles();
+        if (children == null) return null;
+        for (File child : children) {
+            if (child.isDirectory()) {
+                File found = findDriver(child);
+                if (found != null) return found;
+            } else if (child.getName().equals("chromedriver") && child.canExecute()) {
+                return child;
+            }
+        }
+        return null;
     }
 }
